@@ -3,10 +3,16 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
+    "@types/node": "^17.0.22",
     "eslint": "^8.11.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.20.2",
-    "prettier": "2.6.0"
+    "http-server": "^14.1.0",
+    "prettier": "2.6.0",
+    "typescript": "^4.6.2"
+  },
+  "dependencies": {
+    "http": "^0.0.1-security"
   }
 }
