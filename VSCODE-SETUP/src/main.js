@@ -1,18 +1,24 @@
-// @ts-check
+/* eslint-disable */
 
-// Formatting, Linting
-// Formatting: Prettier
-// Linting: ESLint
-// Type Checking: TypeScript
+var numCounters = 0
 
-const http = require('http')
+function getCounter() {
+  numCounters += 1
 
-const server = http.createServer((req, res) => {
-  res.statusCode = 200
-  res.end('Hello!')
-})
+  var result = { count: count, total: 0 }
 
-const PORT = 4000
-server.listen(PORT, () => {
-  console.log(`The server is listening at port: ${PORT}`)
-})
+  function count() {
+    result.total += 1
+  }
+
+  return result
+}
+
+var counterA = getCounter()
+counterA.count()
+counterA.count()
+
+var counterB = getCounter()
+counterB.count()
+
+console.log(counterA.total, counterB.total, numCounters)
