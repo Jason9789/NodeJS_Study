@@ -9,101 +9,62 @@
  * - RESTful API를 사용한다.
  */
 
+const { rejects } = require('assert')
 const http = require('http')
-
-/**
- * @typedef Post
- * @property {string} id
- * @property {string} title
- * @property {string} content
- */
-
-/** @type {Post[]} */
-const posts = [
-  {
-    id: 'my_first_post',
-    title: 'My first post',
-    content: 'Hello!',
-  },
-  {
-    id: 'my_second_post',
-    title: '나의 두번째 포스트',
-    content: 'Hello Second!',
-  },
-]
-
-/**
- *  Post
- *
- * GET /posts
- * GET /posts/:id
- * POST /posts
- */
+const { routes } = require('./api')
 
 const server = http.createServer((req, res) => {
-  const POSTS_ID_REGEX = /^\/posts\/([a-zA-Z0-9-_]+)$/
-  const postIdRegexResult =
-    (req.url && POSTS_ID_REGEX.exec(req.url)) || undefined
+  async function main() {
+    const route = routes.find(
+      (_routes) =>
+        req.url &&
+        _routes.method &&
+        _routes.url.test(req.url) &&
+        _routes.method === req.method
+    )
 
-  // GET /posts
-  if (req.url === '/posts' && req.method === 'GET') {
-    const result = {
-      posts: posts.map((post) => ({
-        id: post.id,
-        title: post.title,
-      })),
-
-      totalCount: posts.length,
-    }
-
-    res.statusCode = 200
-    res.setHeader('Content-Type', 'application/json; charset=utf-8')
-    res.end(JSON.stringify(result))
-  }
-  // GET /posts/:id
-  else if (postIdRegexResult && req.method === 'GET') {
-    const postId = postIdRegexResult[1]
-
-    const post = posts.find((_post) => _post.id === postId)
-
-    if (post) {
-      res.statusCode = 200
-      res.setHeader('Content-Type', 'application/json; charset=utf-8')
-      res.end(JSON.stringify(post))
-    } else {
+    if (!req.url || !route) {
       res.statusCode = 404
-      res.end('Not Found')
+      res.end('Not found.')
+      return
+    }
+
+    const regexResult = route.url.exec(req.url)
+
+    if (!regexResult) {
+      res.statusCode = 404
+      res.end('Not found.')
+      return
+    }
+
+    /** @type {Object.<string, *> | undefined} */
+    const reqBody =
+      (req.headers['content-type'] === 'application/json' &&
+        (await new Promise((resolve) => {
+          req.setEncoding('utf-8')
+          req.on('data', (data) => {
+            try {
+              resolve(JSON.parse(data))
+            } catch {
+              // @ts-ignore
+              rejects(new Error('Ill-formed json'))
+            }
+          })
+        }))) ||
+      undefined
+
+    const result = await route.callback(regexResult, reqBody)
+    res.statusCode = result.statusCode
+
+    if (typeof result.body === 'string') {
+      res.end(result.body)
+    } else {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.end(JSON.stringify(result.body))
     }
   }
 
-  // POST /posts
-  else if (req.url === '/posts' && req.method === 'POST') {
-    req.setEncoding('utf-8')
-    req.on('data', (data) => {
-      /**
-       * @typedef CreatePostBody
-       * @property {string} title
-       * @property {string} content
-       */
-
-      /** @type {CreatePostBody} */
-      const body = JSON.parse(data)
-
-      posts.push({
-        id: body.title.toLowerCase().replace(/\s/g, '_'),
-        title: body.title,
-        content: body.content,
-      })
-    })
-    res.statusCode = 200
-    res.end('Creating post')
-  }
-
-  // else
-  else {
-    res.statusCode = 404
-    res.end('Not Found.')
-  }
+  main()
 })
 
 const PORT = 4000
