@@ -12,7 +12,8 @@ app.set('view engine', 'pug')
 const userRouter = require('./routers/user')
 
 app.use('/users', userRouter)
-app.use('public', express.static('src/public'))
+app.use('/public', express.static('src/public'))
+app.use('/uploads', express.static('uploads'))
 
 // expree에서는 다음과 같은 4개의 인자가 들어간 경우만 에러 핸들링으로 취급한다.
 app.use((err, req, res, next) => {
