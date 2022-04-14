@@ -11,6 +11,8 @@ const app = express()
 // app.use(bodyParser.json())
 app.use(express.json()) // express 4 이상 버전에서는 body Parser를 사용하지 않고 이렇게 사용해도 된다.
 
+app.use(express.static('src/public'))
+
 app.set('views', 'src/views')
 app.set('view engine', 'pug')
 
