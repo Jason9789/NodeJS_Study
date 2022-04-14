@@ -3,33 +3,60 @@
 /* eslint-disable no-console */
 
 const express = require('express')
-const fs = require('fs')
+const bodyParser = require('body-parser')
+
+const userRouter = express.Router()
 
 const app = express()
+// app.use(bodyParser.json())
+app.use(express.json()) // express 4 이상 버전에서는 body Parser를 사용하지 않고 이렇게 사용해도 된다.
 
 const PORT = 8000
 
-// 미들웨어는 위어서부터 정의한 순서대로 실행된다.
-// 또한 next 객체를 통해 현재 미들웨어에서 다음 미들웨어를 실행하게 해준다.
-app.use('/', async (req, res, next) => {
-  console.log('Middleware 1')
+// 일관된 API를 하나로 묶고 싶다면 Router를 사용하면 된다.
+userRouter.get('/', (req, res) => {
+  res.send('User list')
+})
 
-  const fileContent = await fs.promises.readFile('.prettierrc')
+const USERS = {
+  15: {
+    nickname: 'foo',
+  },
+}
 
-  const requestedAt = new Date()
+userRouter.param('id', (req, res, next, value) => {
+  console.log(`id parametar: ${value}`)
 
   // @ts-ignore
-  req.requestedAt = requestedAt
-  // @ts-ignore
-  req.fileContent = fileContent
+  req.user = USERS[value]
+
   next()
 })
 
-app.use((req, res) => {
-  console.log('Middleware 2')
+userRouter.get('/:id', (req, res) => {
+  console.log('userRouter get ID')
   // @ts-ignore
-  res.send(` Requested at ${req.requestedAt},\n ${req.fileContent}`)
+  res.send(req.user)
 })
+
+userRouter.post('/', (req, res) => {
+  // Register user
+  res.send('User list - POST')
+})
+
+userRouter.post('/:id/nickname', (req, res) => {
+  // req.body: { "nickname": "bar" }
+
+  // @ts-ignore
+  const { user } = req
+  const { nickname } = req.body
+
+  user.nickname = nickname
+
+  res.send(`User nickname updated: ${nickname}`)
+})
+
+app.use('/users', userRouter)
 
 app.listen(PORT, () => {
   console.log(`The Express server is listening at port: ${PORT}`)
