@@ -15,10 +15,27 @@ async function main() {
   const c = await client.connect()
 
   const users = client.db('fc21').collection('users')
+  const cities = client.db('fc21').collection('cities')
 
   // deleteMany -> 항상 비워지게 됨. 또한 필터를 걸어야 작동함
   await users.deleteMany({})
+  await cities.deleteMany({})
 
+  // --------------------------------------
+  // City Init
+  await cities.insertMany([
+    {
+      name: '서울',
+      population: 1000,
+    },
+    {
+      name: '부산',
+      population: 350,
+    },
+  ])
+
+  // --------------------------------------
+  // User Init
   // Create, 추가
   await users.insertMany([
     {
@@ -34,51 +51,60 @@ async function main() {
           number: '+829233334444',
         },
       ],
+      city: '서울',
     },
     {
       name: 'Bar',
       birthYear: 1995,
+      contacts: [
+        {
+          type: 'phone',
+          number: '+821011111111',
+        },
+      ],
+      city: '부산',
     },
     {
       name: 'Baz',
       birthYear: 1990,
+      city: '부산',
     },
     {
       name: 'Poo',
       birthYear: 1993,
+      city: '서울',
     },
   ])
 
-  // Delete, 하나만 삭제
-  await users.deleteOne({
-    name: 'Baz',
-  })
-
-  // Update
-  // await users.updateOne(
-  //   {
-  //     name: 'Baz',
-  //   },
-  //   {
-  //     $set: {
-  //       name: 'Boo',
-  //     },
-  //   }
-  // )
-
-  const cursor = users.find(
+  const cursor = users.aggregate([
     {
-      birthYear: {
-        $gte: 1990,
+      $lookup: {
+        from: 'cities',
+        localField: 'city',
+        foreignField: 'name',
+        as: 'city_info',
       },
     },
     {
-      sort: {
-        // sort 할 때 -1은 내림차순, 1은 오름차순
-        birthYear: 1,
+      $match: {
+        $or: [
+          {
+            'city_info.population': {
+              $gte: 500,
+            },
+          },
+          {
+            birthYear: {
+              $gte: 1995,
+            },
+          },
+        ],
       },
-    }
-  )
+    },
+    {
+      $count: 'num_users',
+    },
+  ])
 
   // Read
   await cursor.forEach(console.log)
