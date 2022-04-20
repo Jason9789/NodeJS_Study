@@ -15,6 +15,7 @@
   "dependencies": {
     "commander": "^9.2.0",
     "pg": "^8.7.3",
-    "prompts": "^2.4.2"
+    "prompts": "^2.4.2",
+    "sequelize": "^6.19.0"
   }
 }
